@@ -1,6 +1,7 @@
 package opnsense
 
 import (
+	"compress/gzip"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -149,6 +150,15 @@ func (c *Client) do(method string, path EndpointPath, body io.Reader, responseSt
 					"err", err.Error())
 			time.Sleep(25 * time.Millisecond)
 			continue
+		}
+
+		var reader io.ReadCloser
+		switch resp.Header.Get("Content-Encoding") {
+		case "gzip":
+			reader, err = gzip.NewReader(resp.Body)
+			defer reader.Close()
+		default:
+			reader = resp.Body
 		}
 
 		body, err := io.ReadAll(resp.Body)
