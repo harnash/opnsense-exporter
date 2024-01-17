@@ -156,12 +156,11 @@ func (c *Client) do(method string, path EndpointPath, body io.Reader, responseSt
 		switch resp.Header.Get("Content-Encoding") {
 		case "gzip":
 			reader, err = gzip.NewReader(resp.Body)
-			defer reader.Close()
 		default:
 			reader = resp.Body
 		}
 
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(reader)
 
 		if err != nil {
 			return &APICallError{
@@ -171,7 +170,7 @@ func (c *Client) do(method string, path EndpointPath, body io.Reader, responseSt
 			}
 		}
 
-		resp.Body.Close()
+		reader.Close()
 
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			err := json.Unmarshal(body, &responseStruct)
